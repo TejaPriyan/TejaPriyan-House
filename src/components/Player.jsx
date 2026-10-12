@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useStore, sfx, footstep } from '../store'
 import { objects, colliders } from '../world/layout'
+import { useTouch, useTouchLook } from './TouchControls'
 
 const R = 0.35
 const interactables = objects.filter((o) => o.act)
@@ -31,8 +32,14 @@ const getSurface = (x, z) => {
   return 'grass'
 }
 
+const isMobile = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
 export default function Player() {
-  const st = useRef({ x: 0, z: 12, vx: 0, vz: 0, yaw: 0, pitch: 0, ty: 0, tp: 0, bob: 0, k: {} })
+  const st = useRef({ x: 0, z: 12, vx: 0, vz: 0, yaw: 0, pitch: 0, ty: 0, tp: 0, bob: 0, k: {}, touchDx: 0, touchDz: 0 })
+
+  // Hook up mobile touch controls
+  useTouch(st)
+  useTouchLook(st)
 
   useEffect(() => {
     const s = st.current
@@ -47,7 +54,11 @@ export default function Player() {
       const g = useStore.getState()
       if (!g.started || g.modal || g.journalOpen) return
       if (document.pointerLockElement) interact()
-      else if (e.target.tagName === 'CANVAS') e.target.requestPointerLock()
+      else if (e.target.tagName === 'CANVAS') {
+        // On mobile, tapping canvas acts as interact (no pointer lock)
+        if (isMobile()) interact()
+        else e.target.requestPointerLock()
+      }
     }
     addEventListener('keydown', kd); addEventListener('keyup', ku)
     addEventListener('mousemove', mm); addEventListener('mousedown', md)
@@ -61,8 +72,13 @@ export default function Player() {
     dt = Math.min(dt, 0.05)
     const s = st.current, g = useStore.getState(), k = s.k
     const busy = g.modal || g.journalOpen || !g.started // modal/journal open: movement disabled
-    const ix = busy ? 0 : (k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0)
-    const iz = busy ? 0 : (k.KeyS ? 1 : 0) - (k.KeyW ? 1 : 0)
+
+    // Combine keyboard + touch input
+    const kx = busy ? 0 : (k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0)
+    const kz = busy ? 0 : (k.KeyS ? 1 : 0) - (k.KeyW ? 1 : 0)
+    const ix = busy ? 0 : (kx || s.touchDx)
+    const iz = busy ? 0 : (kz || s.touchDz)
+
     const sp = k.ShiftLeft ? 5 : 3, c = Math.cos(s.yaw), n = Math.sin(s.yaw)
 
     // acceleration / deceleration

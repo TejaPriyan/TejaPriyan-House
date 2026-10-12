@@ -3,6 +3,8 @@ import { useStore } from '../store'
 import { objects } from '../world/layout'
 import { portfolio as p } from '../config/portfolio'
 
+const isMobile = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
 // ===== TYPEWRITER TEXT =====
 function TypewriterText({ text, speed = 18 }) {
   const [displayed, setDisplayed] = useState('')
@@ -280,6 +282,41 @@ function RoomLabel() {
   return <div className="room-label" key={room}>{room}</div>
 }
 
+// ===== MOBILE CONTROLS OVERLAY =====
+function MobileControls() {
+  const started = useStore(s => s.started)
+  const [mobile, setMobile] = useState(false)
+  useEffect(() => { setMobile(isMobile()) }, [])
+
+  if (!mobile || !started) return null
+  return (
+    <>
+      {/* Left joystick zone indicator */}
+      <div className="mobile-joystick-zone" aria-hidden>
+        <div className="mobile-joystick-ring">
+          <div className="mobile-joystick-label">DRAG TO MOVE</div>
+        </div>
+      </div>
+      {/* Right look zone indicator */}
+      <div className="mobile-look-zone" aria-hidden>
+        <div className="mobile-look-label">DRAG TO LOOK</div>
+      </div>
+      {/* Interact button */}
+      <button
+        className="mobile-interact-btn"
+        onTouchStart={(e) => {
+          e.stopPropagation()
+          // Simulate E key press for interaction
+          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' }))
+          setTimeout(() => window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyE' })), 100)
+        }}
+      >
+        INTERACT
+      </button>
+    </>
+  )
+}
+
 // ===== MAIN UI =====
 export default function UI() {
   const s = useStore()
@@ -300,7 +337,10 @@ export default function UI() {
           <button onClick={go}>[ ENTER ]</button>
           <small>{p.tagline}</small>
           <div className="start-controls">
-            WASD Move · Shift Run · Mouse Look · E Interact · Tab Journal · Esc Close
+            {isMobile()
+              ? 'Left Drag Move · Right Drag Look · Tap Interact'
+              : 'WASD Move · Shift Run · Mouse Look · E Interact · Tab Journal · Esc Close'
+            }
           </div>
         </div>
       )}
@@ -315,8 +355,9 @@ export default function UI() {
           </div>
           <div className="hud bl">WASD MOVE · TAB JOURNAL</div>
           <div className="hud br">CLICK / E INTERACT</div>
-          <div className="dot" />
+          {!isMobile() && <div className="dot" />}
           <Minimap />
+          <MobileControls />
           <RoomLabel />
           {target && !s.modal && !s.journalOpen && <div className="prompt">[ E ] {target.name.toUpperCase()}</div>}
           {s.banner && (
