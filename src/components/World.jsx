@@ -7,6 +7,12 @@ import { portfolio as p } from '../config/portfolio'
 import { useStore } from '../store'
 import { PixBox, tex } from '../pixel'
 
+// Public-dir asset paths must be prefixed with BASE_URL so they resolve under
+// subpath hosting (e.g. GitHub Pages at /TejaPriyan-House/) instead of the
+// domain root. With `base: './'` in vite.config.js, BASE_URL is "./".
+const BASE = import.meta.env.BASE_URL
+const asset = (path) => `${BASE}${path}`
+
 const Mat = (props) => <meshStandardMaterial flatShading {...props} />
 
 function Obj({ o }) {
@@ -201,8 +207,8 @@ function Campfire() {
 function Avatar() {
   const g = useRef()
   const show = useStore((s) => s.found.length >= p.discoveries.length - 1)
-  const { scene } = useGLTF('/models/avatar.glb')
-  const texture = useTexture('/models/Textures/texture-a.png')
+  const { scene } = useGLTF(asset('models/avatar.glb'))
+  const texture = useTexture(asset('models/Textures/texture-a.png'))
 
   const model = useMemo(() => {
     texture.magFilter = THREE.NearestFilter
@@ -237,25 +243,25 @@ function Avatar() {
 
 // Kenney 3D Coffee Cup on kitchen counter
 function CoffeeCup() {
-  const { scene } = useGLTF('/models/coffee-cup.glb')
+  const { scene } = useGLTF(asset('models/coffee-cup.glb'))
   return <primitive object={scene.clone()} position={[4.4, 1.05, 4.4]} scale={[1.5, 1.5, 1.5]} />
 }
 
 // Kenney Sports Car parked in the front driveway
 function CarModel() {
-  const { scene } = useGLTF('/models/car.glb')
+  const { scene } = useGLTF(asset('models/car.glb'))
   return <primitive object={scene.clone()} position={[5.8, 0, 9.5]} rotation={[0, -0.4, 0]} scale={[1.2, 1.2, 1.2]} />
 }
 
 // Kenney Treasure Chest
 function ChestModel() {
-  const { scene } = useGLTF('/models/chest.glb')
+  const { scene } = useGLTF(asset('models/chest.glb'))
   return <primitive object={scene.clone()} position={[-5.8, 0, 8.5]} rotation={[0, 0.5, 0]} scale={[1.3, 1.3, 1.3]} />
 }
 
 // Kenney Flowers along entrance path
 function FlowerGarden() {
-  const { scene } = useGLTF('/models/flower.glb')
+  const { scene } = useGLTF(asset('models/flower.glb'))
   const spots = [
     [-1.6, 0, 7], [1.6, 0, 7],
     [-1.6, 0, 9], [1.6, 0, 9],
@@ -417,9 +423,9 @@ export default function World() {
   )
 }
 
-useGLTF.preload('/models/avatar.glb')
-useGLTF.preload('/models/coffee-cup.glb')
-useGLTF.preload('/models/car.glb')
-useGLTF.preload('/models/chest.glb')
-useGLTF.preload('/models/flower.glb')
-useTexture.preload('/models/Textures/texture-a.png')
+useGLTF.preload(asset('models/avatar.glb'))
+useGLTF.preload(asset('models/coffee-cup.glb'))
+useGLTF.preload(asset('models/car.glb'))
+useGLTF.preload(asset('models/chest.glb'))
+useGLTF.preload(asset('models/flower.glb'))
+useTexture.preload(asset('models/Textures/texture-a.png'))
